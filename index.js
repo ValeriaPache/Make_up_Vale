@@ -1,88 +1,64 @@
-let cart = [];
-let body = document.querySelector(".bag table tbody");
-let price = 0;
-let buttons = document.querySelectorAll(".subcontainerProducts .product button");
-let account = document.querySelector(".bag .account");
-let total = document.getElementById("price5");
+const cart = [];
+const cartTableBody = document.querySelector(".cart table tbody");
+const totalPriceElement = document.getElementById("price5");
+const checkoutButton = document.querySelector(".buttons button");
+const accountElement = document.querySelector(".account");
 
-function add() {
-    let name = this.parentNode.querySelector("h3").textContent;
-    let price1 = parseFloat(this.parentNode.querySelector("p").textContent); // Conversion directa a número
-    let url = this.parentNode.querySelector(".image img").getAttribute("src");
-
-    // Añade el producto al carrito
-    cart.push({ name, price1, url });
-    localStorage.setItem("articles", JSON.stringify(cart));
-    account.textContent = cart.length;
-
-    // Suma al price total
-    price += price1;
-    total.textContent = price.toFixed(2); // Muestra el total en el formato adecuado
-    localStorage.setItem("price", price.toFixed(2));
-
-    update();
-}
-
-function update() {
-    body.innerHTML = "";
+// Función para actualizar el total y el número de artículos en el carrito
+function updateCart() {
+    cartTableBody.innerHTML = "";
+    let total = 0;
 
     cart.forEach((item, index) => {
-        let fila = document.createElement("tr");
-
-        let image = document.createElement("img");
-        image.src = item.url;
-        let imageTd = document.createElement("td");
-        imageTd.appendChild(image);
-        fila.appendChild(imageTd);
-
-        fila.innerHTML += `
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td><img src="${item.image}" alt="${item.name}"></td>
             <td>${item.name}</td>
-            <td>${item.price1.toFixed(2)}</td>
-            <td><a href="#" onclick="eliminate(${index});">X</a></td>
+            <td>${item.price}</td>
+            <td><button onclick="removeFromCart(${index})">X</button></td>
         `;
-
-        body.appendChild(fila);
+        cartTableBody.appendChild(row);
+        total += item.price;
     });
+
+    totalPriceElement.innerText = total;
+    accountElement.innerText = cart.length;
 }
 
-function eliminate(index) {
-    let item = cart[index];
+// Función para añadir un producto al carrito
+function addToCart(name, price, image) {
+    cart.push({ name, price, image });
+    updateCart();
+}
+
+// Función para eliminar un producto del carrito
+function removeFromCart(index) {
     cart.splice(index, 1);
-
-    price -= item.price1; // Resta el price eliminado del total
-    total.textContent = price.toFixed(2);
-    account.textContent = cart.length;
-
-    localStorage.setItem("articles", JSON.stringify(cart));
-    localStorage.setItem("price", price.toFixed(2));
-    update();
+    updateCart();
 }
 
-window.addEventListener("load", loadi);
-
-function loadi() {
-    let itemlocal = localStorage.getItem("articles");
-    let pricelocal = localStorage.getItem("price");
-
-    if (itemlocal) {
-        cart = JSON.parse(itemlocal);
-        price = pricelocal ? parseFloat(pricelocal) : 0;
-        total.textContent = price.toFixed(2);
-        account.textContent = cart.length;
-        update();
-    }
-}
-
+// Función para vaciar el carrito
 function empty2() {
-    body.innerHTML = "";
-    account.textContent = "0";
-    price = 0;
-    cart = [];
-    localStorage.removeItem("articles");
-    localStorage.removeItem("price");
-    total.textContent = "0.00";
+    cart.length = 0;
+    updateCart();
 }
 
-buttons.forEach(btn => {
-    btn.addEventListener("click", add);
+// Función para realizar la compra
+checkoutButton.addEventListener("click", () => {
+    if (cart.length === 0) {
+        alert("El carrito está vacío. ¡Agrega productos para continuar!");
+        return;
+    }
+    alert("¡Compra realizada con éxito!");
+    empty2();
+});
+
+// Asignar la función de añadir al carrito a los botones de los productos
+document.querySelectorAll(".product").forEach((product) => {
+    const name = product.querySelector("h3").innerText;
+    const price = parseInt(product.querySelector("p").innerText);
+    const image = product.querySelector("img").src;
+    product.querySelector("button").addEventListener("click", () => {
+        addToCart(name, price, image);
+    });
 });
